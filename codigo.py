@@ -15,13 +15,40 @@ def verify_login(username, password):
     return None
 
 def draw_graph(df, user_info):
-    G = nx.from_pandas_edgelist(df, 'Código', 'Codigo_del_Requisito', create_using=nx.DiGraph())
-    pos = nx.spring_layout(G, k=0.75)  # Aumenta el parámetro k para más espacio entre nodos
-    color_map = ['green' if node in user_info['cursos_aprobados'] else 'red' for node in G]
-    
-    plt.figure(figsize=(12, 12))  # Aumenta el tamaño para una mejor visualización
-    nx.draw(G, pos, node_color=color_map, with_labels=True, node_size=700, font_size=10)
-    st.pyplot(plt)
+    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar."""
+    # Convertir ciclos a enteros para comparaciones
+    df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
+
+    # Filtrar cursos que están dentro de 3 ciclos adelante
+    ciclo_actual = int(user_info['ciclo_actual'])
+    df_filtrado = df[df['Ciclo'] <= ciclo_actual + 3]
+
+    # Crear el grafo
+    G = nx.from_pandas_edgelist(df_filtrado, 'Código', 'Codigo_del_Requisito', create_using=nx.DiGraph())
+    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
+
+    # Determinar cursos accesibles basados en requisitos cumplidos
+    cursos_accesibles = set(user_info['cursos_aprobados'])  # Comenzar con cursos aprobados
+    for _, row in df_filtrado.iterrows():
+        if row['Codigo_del_Requisito'] in cursos_accesibles or pd.isna(row['Codigo_del_Requisito']):
+            cursos_accesibles.add(row['Código'])
+
+    # Añadir nodos con colores correspondientes
+    for node in G.nodes:
+        if node in user_info['cursos_aprobados']:
+            net.add_node(node, title=node, color='green')  # Verde para aprobados
+        elif node in cursos_accesibles:
+            net.add_node(node, title=node, color='blue')  # Azul para accesibles
+        else:
+            net.add_node(node, title=node, color='gray')  # Gris para no accesibles
+
+    # Añadir aristas
+    for edge in G.edges:
+        net.add_edge(edge[0], edge[1])
+
+    # Mostrar el grafo
+    net.show("graph.html")
+    st.components.v1.html(net.html, height=800)
 
 def main():
     st.title("Sistema de Visualización de Cursos")
