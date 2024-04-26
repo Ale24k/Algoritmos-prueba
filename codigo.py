@@ -18,13 +18,13 @@ def verify_login(username, password):
     return None
 
 def draw_graph(df, user_info):
-    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar."""
+    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar, mostrando nombres en los nodos."""
     ciclo_actual = int(user_info['ciclo_actual'])
     cursos_aprobados = set(user_info['cursos_aprobados'])
 
-    # Convertir ciclos a enteros y limpiar códigos de curso para consistencia
-    df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
+    # Asegurarse de que 'Código' y 'Nombre' están en formato string y limpios
     df['Código'] = df['Código'].astype(str).str.strip()
+    df['Nombre'] = df['Nombre'].astype(str).str.strip()
     df['Codigo_del_Requisito'] = df['Codigo_del_Requisito'].astype(str).str.strip()
 
     # Filtrar cursos que están dentro de 3 ciclos adelante
@@ -40,19 +40,21 @@ def draw_graph(df, user_info):
         if row['Codigo_del_Requisito'] in cursos_accesibles or row['Codigo_del_Requisito'] == 'nan':
             cursos_accesibles.add(row['Código'])
 
-    # Añadir nodos con colores correspondientes
+    # Añadir nodos con colores correspondientes y título con el nombre del curso
     for node in G.nodes:
+        nombre_curso = df_filtrado.loc[df_filtrado['Código'] == node, 'Nombre'].values[0]
         color = 'green' if node in cursos_aprobados else 'blue' if node in cursos_accesibles else 'gray'
-        net.add_node(node, title=node, color=color)
+        titulo = f"{node}: {nombre_curso}"
+        net.add_node(node, title=titulo, color=color)
 
     # Añadir aristas
     for edge in G.edges:
         net.add_edge(edge[0], edge[1])
 
-    # Guardar el grafo en HTML y mostrarlo en Streamlit
+    # Guardar y mostrar el grafo
     net.save_graph("graph.html")
     HtmlFile = open("graph.html", 'r', encoding='utf-8')
-    source_code = HtmlFile.read() 
+    source_code = HtmlFile.read()
     st.components.v1.html(source_code, height=800)
 
 def main():
