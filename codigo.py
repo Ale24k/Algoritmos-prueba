@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # Asumiendo que los usuarios están almacenados en este formato
 USERS = {
-    'user1': {'password': 'pass1', 'ciclo_actual': '2', 'cursos_aprobados': ['C0090', 'C0613', 'C0659']}
+    'user1': {'password': 'pass1', 'ciclo_actual': '2', 'cursos_aprobados': ['C001', 'C002', 'C003']}
 }
 
 def verify_login(username, password):
@@ -41,8 +41,9 @@ def main():
     uploaded_file = st.sidebar.file_uploader("Subir archivo CSV o Excel", type=['csv', 'xlsx'])
     df = None
     if uploaded_file:
+        # Leer el archivo como un objeto buffer
         if uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file)
+            df = pd.read_csv(uploaded_file, engine='python')  # Usar el motor Python si hay problemas con el motor C
         else:
             df = pd.read_excel(uploaded_file)
 
