@@ -14,7 +14,7 @@ def verify_login(username, password):
         return user_info
     return None
 
-def draw_graph_nx(df, user_info):
+def draw_graph(df, user_info):
     G = nx.from_pandas_edgelist(df, 'Código', 'Codigo_del_Requisito', create_using=nx.DiGraph())
     pos = nx.spring_layout(G, k=0.75)  # Aumenta el parámetro k para más espacio entre nodos
     color_map = ['green' if node in user_info['cursos_aprobados'] else 'red' for node in G]
