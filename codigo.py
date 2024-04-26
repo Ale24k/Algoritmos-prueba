@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # Asumiendo que los usuarios están almacenados en este formato
 USERS = {
-    'user1': {'password': 'pass1', 'ciclo_actual': '2', 'cursos_aprobados': ['C001', 'C002', 'C003']}
+    '72721479': {'password': 'ola123', 'ciclo_actual': '2', 'cursos_aprobados': ['C0090', 'C0613', 'C0659','C0737','C0201','C8189']}
 }
 
 def verify_login(username, password):
@@ -28,7 +28,7 @@ def draw_graph(df, user_info):
         if node in cursos_aprobados:
             color_map.append('green')  # Curso aprobado
         else:
-            color_map.append('red')  # Curso no aprobado
+            color_map.append('gray')  # Curso no aprobado
 
     plt.figure(figsize=(10, 8))
     nx.draw(G, pos, node_color=color_map, with_labels=True, arrowstyle='->', arrowsize=10)
