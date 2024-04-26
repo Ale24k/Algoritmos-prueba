@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # Asumiendo que los usuarios están almacenados en este formato
 USERS = {
-    '72721479': {'password': 'ola123', 'ciclo_actual': '2', 'cursos_aprobados': ['C0090', 'C0659', 'C0613','C0737','C0201','C8189']}
+    'user1': {'password': 'pass1', 'ciclo_actual': '2', 'cursos_aprobados': ['C001', 'C002', 'C003']}
 }
 
 def verify_login(username, password):
