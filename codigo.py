@@ -1,28 +1,44 @@
 import streamlit as st
 import pandas as pd
+import networkx as nx
+import matplotlib.pyplot as plt
 
 # Simulando una base de datos de usuarios
-usuarios = pd.DataFrame({
-    'DNI': ['12345678', '87654321'],
-    'Nombre': ['Juan Perez', 'Ana Lopez'],
-    'Ciclo': [2, 3],
-    'CursosAprobados': [['C001,C002,C003,C004,C005'], ['C001', 'C002', 'C008']]
-})
+usuarios = {
+    '12345678': {'nombre': 'Juan Perez', 'ciclo': 2, 'cursos_aprobados': ['C0090', 'C0613']},
+    '12345679': {'nombre': 'Juan Perez', 'ciclo': 2, 'cursos_aprobados': ['C0659', 'C0613']},
+    
+}
 
-# Configuración de la página de Streamlit
-st.title('Login para Sistema de Gestión de Cursos')
+def crear_grafo(df_malla):
+    G = nx.DiGraph()
+    for _, row in df_malla.iterrows():
+        G.add_node(row['Código'], nombre=row['Nombre'])
+        if row['Requisito'] != 'Ninguno':
+            G.add_edge(row['Requisito'], row['Código'])
+    return G
 
-# Campo para ingresar el DNI
+def visualizar_grafo(G, cursos_aprobados):
+    plt.figure(figsize=(10, 8))
+    pos = nx.spring_layout(G)
+    nx.draw(G, pos, with_labels=True, node_size=500, node_color='lightblue', font_size=8)
+    plt.show()
+
+# Streamlit UI
+st.title('Sistema de Gestión de Cursos')
 dni_input = st.text_input("Ingresa tu DNI:")
+archivo_curricular = st.file_uploader("Carga el plan de estudios de tu carrera en formato CSV", type=['csv'])
 
-# Botón para iniciar sesión
-if st.button('Iniciar Sesión'):
-    usuario = usuarios[usuarios['DNI'] == dni_input]
-    if not usuario.empty:
-        # Usuario autenticado
-        st.success(f"Bienvenido {usuario.iloc[0]['Nombre']}")
-        # Aquí podrías añadir más funcionalidad, como mostrar los cursos aprobados
-        st.write("Cursos Aprobados:", usuario.iloc[0]['CursosAprobados'])
+if st.button('Iniciar Sesión y Cargar Plan de Estudios'):
+    if dni_input in usuarios and archivo_curricular is not None:
+        usuario = usuarios[dni_input]
+        st.success(f"Bienvenido {usuario['nombre']}")
+
+        # Leer el archivo CSV y crear el DataFrame
+        df_malla = pd.read_csv(archivo_curricular)
+        G = crear_grafo(df_malla)
+
+        # Visualizar el grafo en base a los cursos aprobados
+        visualizar_grafo(G, usuario['cursos_aprobados'])
     else:
-        # Fallo en la autenticación
-        st.error("DNI no encontrado. Por favor verifica e intenta de nuevo.")
+        st.error("Por favor verifica el DNI o asegúrate de haber cargado el archivo CSV.")
