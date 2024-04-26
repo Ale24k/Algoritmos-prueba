@@ -6,6 +6,8 @@ from pyvis.network import Network
 # Datos de ejemplo para usuarios
 USERS = {
     '72721479': {'password': 'ola123', 'ciclo_actual': '2', 'cursos_aprobados': ['C0090', 'C0613', 'C0659','C0737','C0201','C8189']}
+    '70702312': {'password': 'ola123', 'ciclo_actual': '3', 'cursos_aprobados': ['C0090', 'C0613', 'C0659','C0737','C0201','C8189','C0614','C0657','C0622','C8190','C8191','C0667']}
+
 }
 
 def verify_login(username, password):
