@@ -1,44 +1,103 @@
 import streamlit as st
 import pandas as pd
-import networkx as nx
-import matplotlib.pyplot as plt
+import os
 
-# Simulando una base de datos de usuarios
-usuarios = {
-    '12345678': {'nombre': 'Juan Perez', 'ciclo': 2, 'cursos_aprobados': ['C0090', 'C0613']},
-    '12345679': {'nombre': 'Juan Perez', 'ciclo': 2, 'cursos_aprobados': ['C0659', 'C0613']},
-    
-}
 
-def crear_grafo(df_malla):
-    G = nx.DiGraph()
-    for _, row in df_malla.iterrows():
-        G.add_node(row['Código'], nombre=row['Nombre'])
-        if row['Requisito'] != 'Ninguno':
-            G.add_edge(row['Requisito'], row['Código'])
-    return G
+def main():
+    logged_in = False  # Variable para verificar si el usuario ha iniciado sesión
+    menu = ["Login", "Registro"]
+    choice = st.sidebar.selectbox("Menú", menu)
 
-def visualizar_grafo(G, cursos_aprobados):
-    plt.figure(figsize=(10, 8))
-    pos = nx.spring_layout(G)
-    nx.draw(G, pos, with_labels=True, node_size=500, node_color='lightblue', font_size=8)
-    plt.show()
+    if choice == "Login":
+        st.markdown("<h1 style='text-align: center;'>Login</h1>", unsafe_allow_html=True)
+        logged_in = show_login()
+    elif choice == "Registro":
+        st.markdown("<h1 style='text-align: center;'>Registrarse</h1>", unsafe_allow_html=True)
+        show_registration()
 
-# Streamlit UI
-st.title('Sistema de Gestión de Cursos')
-dni_input = st.text_input("Ingresa tu DNI:")
-archivo_curricular = st.file_uploader("Carga el plan de estudios de tu carrera en formato CSV", type=['csv'])
+    if logged_in:
+        show_user_account()
 
-if st.button('Iniciar Sesión y Cargar Plan de Estudios'):
-    if dni_input in usuarios and archivo_curricular is not None:
-        usuario = usuarios[dni_input]
-        st.success(f"Bienvenido {usuario['nombre']}")
 
-        # Leer el archivo CSV y crear el DataFrame
-        df_malla = pd.read_csv(archivo_curricular)
-        G = crear_grafo(df_malla)
+def show_registration():
+    # Campos de entrada para el nombre de usuario y la contraseña
+    username = st.text_input("Nombre de usuario")
+    password = st.text_input("Contraseña", type="password")
 
-        # Visualizar el grafo en base a los cursos aprobados
-        visualizar_grafo(G, usuario['cursos_aprobados'])
-    else:
-        st.error("Por favor verifica el DNI o asegúrate de haber cargado el archivo CSV.")
+    # Botón para realizar el registro
+    if st.button("Registrarse"):
+        if username and password:
+            register_user(username, password)
+            st.success("¡Registro exitoso! Por favor, inicia sesión.")
+        else:
+            st.error("Por favor, completa todos los campos.")
+
+
+def register_user(username, password):
+    # Obtener la ruta al directorio actual del script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Construir la ruta al archivo de usuarios dentro del directorio del proyecto
+    users_file_path = os.path.join(current_dir, "users.txt")
+
+    # Escribir los datos de registro en el archivo de usuarios
+    with open(users_file_path, "a") as file:
+        file.write(f"{username}:{password}\n")
+
+
+def show_login():
+    # Campos de entrada para el nombre de usuario y la contraseña
+    username = st.text_input("Nombre de usuario")
+    password = st.text_input("Contraseña", type="password")
+
+    # Botón para iniciar sesión
+    if st.button("Iniciar sesión"):
+        if verify_user(username, password):
+            st.success(f"Bienvenido, {username}!")
+            return True  # Marcar como iniciado sesión si la verificación es exitosa
+        else:
+            st.error("Nombre de usuario o contraseña incorrectos.")
+
+
+def verify_user(username, password):
+    # Obtener la ruta al directorio actual del script
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Construir la ruta al archivo de usuarios dentro del directorio del proyecto
+    users_file_path = os.path.join(current_dir, "users.txt")
+
+    with open(users_file_path, "r") as file:
+        lines = file.readlines()
+        for line in lines:
+            stored_username, stored_password = line.strip().split(":")
+            if username == stored_username and password == stored_password:
+                return True
+    return False
+s
+
+def show_user_account():
+    st.write("")
+    st.write("")
+    st.write("[Ver perfil](#)")
+    if st.button("Cerrar sesión", key="logout_btn"):
+        st.success("¡Sesión cerrada correctamente!")
+        st.experimental_rerun()
+
+    user_name = "NOMBRE DE USUARIO"  # Aquí debes obtener el nombre de usuario actualmente logueado
+    st.sidebar.write(f"### Bienvenida {user_name}")
+    file_type = st.sidebar.selectbox("Seleccione el tipo de archivo:", ["CSV", "Excel"])
+
+    if file_type:
+        st.markdown("<h1 style='text-align: center;'>Subir plan curricular</h1>", unsafe_allow_html=True)
+        uploaded_file = st.file_uploader("Seleccione un archivo", type=["csv", "xlsx"])
+        if uploaded_file is not None:
+            if file_type == "CSV":
+                df = pd.read_csv(uploaded_file)
+            else:
+                df = pd.read_excel(uploaded_file)
+            st.write(df)
+
+    st.button("Iniciar proceso de matrícula")
+
+if __name__ == "__main__":
+    main()
