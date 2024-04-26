@@ -47,9 +47,11 @@ def draw_graph(df, user_info):
     for edge in G.edges:
         net.add_edge(edge[0], edge[1])
 
-    # Mostrar el grafo
-    net.show("graph.html")
-    st.components.v1.html(net.html, height=800)
+    # Guardar el grafo en HTML y mostrarlo en Streamlit
+    net.save_graph("graph.html")
+    HtmlFile = open("graph.html", 'r', encoding='utf-8')
+    source_code = HtmlFile.read() 
+    st.components.v1.html(source_code, height=800)
 
 def main():
     st.title("Sistema de Visualización de Cursos")
