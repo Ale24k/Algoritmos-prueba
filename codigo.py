@@ -6,7 +6,7 @@ usuarios = pd.DataFrame({
     'DNI': ['12345678', '87654321'],
     'Nombre': ['Juan Perez', 'Ana Lopez'],
     'Ciclo': [2, 3],
-    'CursosAprobados': [['C001'], ['C001', 'C002']]
+    'CursosAprobados': [['C001,C002,C003,C004,C005'], ['C001', 'C002', 'C008']]
 })
 
 # Configuración de la página de Streamlit
