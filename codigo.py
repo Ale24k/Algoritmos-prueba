@@ -58,20 +58,33 @@ def draw_graph(df, user_info):
 def main():
     st.title("Sistema de Visualización de Cursos")
 
-    username = st.sidebar.text_input("Nombre de Usuario")
-    password = st.sidebar.text_input("Contraseña", type="password")
-    uploaded_file = st.sidebar.file_uploader("Subir archivo CSV o Excel", type=['csv', 'xlsx'])
+    if 'logged_in' not in st.session_state:
+        st.session_state['logged_in'] = False
 
-    if st.sidebar.button("Iniciar Sesión"):
-        user_info = verify_login(username, password)
-        if user_info:
-            if uploaded_file:
-                df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
-                draw_graph(df, user_info)
+    if st.session_state['logged_in']:
+        # Mostrar botón de cierre de sesión
+        if st.sidebar.button("Cerrar Sesión"):
+            st.session_state['logged_in'] = False
+            st.experimental_rerun()  # Recargar la página para actualizar el estado de la UI
+
+        # Continuar mostrando la funcionalidad principal de la aplicación
+        uploaded_file = st.sidebar.file_uploader("Subir archivo CSV o Excel", type=['csv', 'xlsx'])
+        if uploaded_file:
+            df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
+            draw_graph(df, st.session_state['user_info'])
+
+    else:
+        # Sección de login
+        username = st.sidebar.text_input("Nombre de Usuario")
+        password = st.sidebar.text_input("Contraseña", type="password")
+        if st.sidebar.button("Iniciar Sesión"):
+            user_info = verify_login(username, password)
+            if user_info:
+                st.session_state['logged_in'] = True
+                st.session_state['user_info'] = user_info
+                st.experimental_rerun()  # Recargar la página para actualizar el estado de la UI
             else:
-                st.error("Por favor, carga un archivo antes de iniciar sesión")
-        else:
-            st.error("Credenciales incorrectas")
+                st.error("Credenciales incorrectas")
 
 if __name__ == "__main__":
     main()
