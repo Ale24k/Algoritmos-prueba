@@ -2,21 +2,20 @@ import streamlit as st
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from pyvis.network import Network
 
-# Asumiendo que los usuarios están almacenados en este formato
 USERS = {
     '72721479': {'password': 'ola123', 'ciclo_actual': '2', 'cursos_aprobados': ['C0090', 'C0613', 'C0659','C0737','C0201','C8189']}
 }
 
 def verify_login(username, password):
-    """Verifica las credenciales del usuario."""
     user_info = USERS.get(username)
     if user_info and user_info['password'] == password:
         return user_info
     return None
 
 def draw_graph(df, user_info):
-    """Dibuja el grafo con los cursos aprobados marcados en verde."""
     G = nx.from_pandas_edgelist(df, 'Código', 'Codigo_del_Requisito', create_using=nx.DiGraph())
     ciclo_actual = int(user_info['ciclo_actual'])
     cursos_aprobados = user_info['cursos_aprobados']
