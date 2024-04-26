@@ -15,22 +15,13 @@ def verify_login(username, password):
         return user_info
     return None
 
-def draw_graph(df, user_info):
+def draw_graph_nx(df, user_info):
     G = nx.from_pandas_edgelist(df, 'Código', 'Codigo_del_Requisito', create_using=nx.DiGraph())
-    ciclo_actual = int(user_info['ciclo_actual'])
-    cursos_aprobados = user_info['cursos_aprobados']
-
-    # Dibujar el grafo
-    pos = nx.spring_layout(G)
-    color_map = []
-    for node in G:
-        if node in cursos_aprobados:
-            color_map.append('green')  # Curso aprobado
-        else:
-            color_map.append('gray')  # Curso no aprobado
-
-    plt.figure(figsize=(10, 8))
-    nx.draw(G, pos, node_color=color_map, with_labels=True, arrowstyle='->', arrowsize=10)
+    pos = nx.spring_layout(G, k=0.75)  # Aumenta el parámetro k para más espacio entre nodos
+    color_map = ['green' if node in user_info['cursos_aprobados'] else 'red' for node in G]
+    
+    plt.figure(figsize=(12, 12))  # Aumenta el tamaño para una mejor visualización
+    nx.draw(G, pos, node_color=color_map, with_labels=True, node_size=700, font_size=10)
     st.pyplot(plt)
 
 def main():
