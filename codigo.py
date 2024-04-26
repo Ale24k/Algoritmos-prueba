@@ -73,7 +73,7 @@ def verify_user(username, password):
             if username == stored_username and password == stored_password:
                 return True
     return False
-s
+
 
 def show_user_account():
     st.write("")
