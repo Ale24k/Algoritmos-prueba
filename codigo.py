@@ -22,7 +22,15 @@ def draw_graph(df, user_info):
     ciclo_actual = int(user_info['ciclo_actual'])
     cursos_aprobados = set(user_info['cursos_aprobados'])
 
-    # Asegurarse de que 'Código' y 'Nombre' están en formato string y limpios
+    # Verificar si las columnas necesarias existen en el DataFrame
+    required_columns = ['Ciclo', 'Código', 'Codigo_del_Requisito', 'Nombre']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        st.error(f"Faltan las siguientes columnas en el archivo cargado: {', '.join(missing_columns)}")
+        return  # Detener la ejecución si faltan columnas
+
+    # Convertir ciclos a enteros y limpiar códigos de curso para consistencia
+    df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
     df['Código'] = df['Código'].astype(str).str.strip()
     df['Nombre'] = df['Nombre'].astype(str).str.strip()
     df['Codigo_del_Requisito'] = df['Codigo_del_Requisito'].astype(str).str.strip()
@@ -42,7 +50,7 @@ def draw_graph(df, user_info):
 
     # Añadir nodos con colores correspondientes y título con el nombre del curso
     for node in G.nodes:
-        nombre_curso = df_filtrado.loc[df_filtrado['Código'] == node, 'Nombre'].values[0]
+        nombre_curso = df_filtrado.loc[df_filtrado['Código'] == node, 'Nombre'].values[0] if 'Nombre' in df_filtrado.columns else "Nombre desconocido"
         color = 'green' if node in cursos_aprobados else 'blue' if node in cursos_accesibles else 'gray'
         titulo = f"{node}: {nombre_curso}"
         net.add_node(node, title=titulo, color=color)
@@ -56,6 +64,7 @@ def draw_graph(df, user_info):
     HtmlFile = open("graph.html", 'r', encoding='utf-8')
     source_code = HtmlFile.read()
     st.components.v1.html(source_code, height=800)
+
 
 def main():
     st.title("Sistema de Visualización de Cursos")
