@@ -16,41 +16,51 @@ def verify_login(username, password):
         return user_info
     return None
 
+from pyvis.network import Network
+import pandas as pd
+import streamlit as st
+import networkx as nx
+
 def draw_graph(df, user_info):
-    """ Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar. """
-    ciclo_actual = int(user_info['ciclo_actual'])
-    cursos_aprobados = set(user_info['cursos_aprobados'])
+    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar, mostrando nombres en los nodos."""
+    try:
+        # Convertir ciclos a enteros y asegurar que los datos son del tipo correcto
+        df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
+        df['Código'] = df['Código'].astype(str).str.strip()
+        df['Nombre'] = df['Nombre'].astype(str).str.strip()
+        df['Requisito'] = df['Requisito'].astype(str).str.strip()
 
-    # Convertir ciclos a enteros y asegurar que los datos son del tipo correcto
-    df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
-    df['Código'] = df['Código'].astype(str).str.strip()
-    df['Nombre'] = df['Nombre'].astype(str).str.strip()
-    df['Requisito'] = df['Requisito'].astype(str).str.strip()
+        # Filtrar cursos que están dentro de 3 ciclos adelante
+        ciclo_actual = int(user_info['ciclo_actual'])
+        df_filtrado = df[df['Ciclo'] <= ciclo_actual + 3]
 
-    # Filtrar cursos que están dentro de 3 ciclos adelante
-    df_filtrado = df[df['Ciclo'] <= ciclo_actual + 3]
+        # Crear el grafo
+        G = nx.from_pandas_edgelist(df_filtrado, 'Código', 'Requisito', create_using=nx.DiGraph())
+        net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
 
-    # Crear el grafo
-    G = nx.from_pandas_edgelist(df_filtrado, 'Código', 'Requisito', create_using=nx.DiGraph())
-    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
+        # Determinar cursos accesibles basados en requisitos cumplidos
+        cursos_accesibles = {code for code in df_filtrado['Código'] if df_filtrado[df_filtrado['Código'] == code]['Requisito'].values[0] in user_info['cursos_aprobados']}
+        
+        # Añadir nodos con colores correspondientes y título con el nombre del curso
+        for node in G.nodes:
+            # Usar el nombre del curso para el tooltip si está disponible
+            nombre_curso = df_filtrado[df_filtrado['Código'] == node]['Nombre'].values[0] if node in df_filtrado['Código'].values else 'Nombre no encontrado'
+            color = 'green' if node in user_info['cursos_aprobados'] else 'blue' if node in cursos_accesibles else 'gray'
+            titulo = f"{node}: {nombre_curso}"
+            net.add_node(node, title=titulo, color=color)
 
-    # Añadir nodos con colores y títulos
-    for node in G.nodes:
-        # Usar el nombre del curso para el tooltip si está disponible
-        nombre_curso = df_filtrado[df_filtrado['Código'] == node]['Nombre'].iloc[0] if node in df_filtrado['Código'].values else 'Nombre no encontrado'
-        color = 'green' if node in cursos_aprobados else 'blue'
-        titulo = f"{node}: {nombre_curso}"
-        net.add_node(node, title=titulo, color=color)
+        # Añadir aristas
+        for edge in G.edges:
+            net.add_edge(edge[0], edge[1])
 
-    # Añadir aristas
-    for edge in G.edges:
-        net.add_edge(edge[0], edge[1])
+        # Guardar y mostrar el grafo
+        net.save_graph("graph.html")
+        HtmlFile = open("graph.html", 'r', encoding='utf-8')
+        source_code = HtmlFile.read()
+        st.components.v1.html(source_code, height=800)
+    except KeyError as e:
+        st.error(f"Error: la columna {e} no se encontró en el archivo cargado.")
 
-    # Guardar y mostrar el grafo
-    net.save_graph("graph.html")
-    HtmlFile = open("graph.html", 'r', encoding='utf-8')
-    source_code = HtmlFile.read()
-    st.components.v1.html(source_code, height=800)
 
 def main():
     st.title("Sistema de Visualización de Cursos")
