@@ -60,6 +60,28 @@ def draw_graph(df, user_info):
     # Guardar y mostrar el grafo
     net.show_buttons(filter_=['physics'])
     net.save_graph("graph.html")
+    net.show_buttons(filter_=['interaction'])  # Add this to enable the interaction options in GUI
+net.set_options("""
+var options = {
+  interaction:{
+    tooltipDelay: 0,
+    hideEdgesOnDrag: true,
+    hideNodesOnDrag: true
+  },
+  manipulation: {
+    enabled: true
+  }
+}
+
+network.on("click", function (params) {
+    if (params.nodes.length > 0) {
+        var nodeId = params.nodes[0];
+        var nodeTitle = this.body.nodes[nodeId].options.title;
+        alert(nodeTitle);
+    }
+});
+""")
+
     HtmlFile = open("graph.html", 'r', encoding='utf-8')
     source_code = HtmlFile.read()
     st.components.v1.html(source_code, height=800)
