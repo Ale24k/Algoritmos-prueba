@@ -27,60 +27,52 @@ def draw_graph(df, user_info):
     cursos_aprobados = set(user_info['cursos_aprobados'])
 
     # Convertir ciclos a enteros y limpiar códigos de curso para consistencia
-    df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
+    df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce').fillna(0).astype(int)
     df['Código'] = df['Código'].astype(str).str.strip()
     df['Codigo_del_Requisito'] = df['Codigo_del_Requisito'].astype(str).str.strip()
 
     # Crear el grafo dirigido
     G = nx.DiGraph()
 
-    # Preparar datos para la visualización por niveles
-    level_dict = {}  # Diccionario para almacenar los niveles (ciclos) de los nodos
+    # Agregar nodos con información de ciclo y color inicial
+    for code in df['Código'].unique():
+        ciclo = df.loc[df['Código'] == code, 'Ciclo'].max()  # Usar el ciclo más alto si hay discrepancias
+        G.add_node(code, label=code, level=ciclo, color='gray')
 
-    for index, row in df.iterrows():
-        G.add_node(row['Código'], label=row['Código'], title=row['Código'], level=int(row['Ciclo']))
+    # Agregar aristas y actualizar colores de nodos
+    for _, row in df.iterrows():
         if pd.notna(row['Codigo_del_Requisito']):
             G.add_edge(row['Codigo_del_Requisito'], row['Código'])
-            G.nodes[row['Código']]['color'] = 'blue' if row['Código'] not in cursos_aprobados else 'green'
-            G.nodes[row['Codigo_del_Requisito']]['color'] = 'green' if row['Codigo_del_Requisito'] in cursos_aprobados else 'gray'
-            if row['Codigo_del_Requisito'] not in level_dict:
-                level_dict[row['Codigo_del_Requisito']] = int(df[df['Código'] == row['Codigo_del_Requisito']]['Ciclo'].dropna().iloc[0])
+            if row['Codigo_del_Requisito'] in cursos_aprobados:
+                G.nodes[row['Código']]['color'] = 'blue' if row['Código'] not in cursos_aprobados else 'green'
+                G.nodes[row['Codigo_del_Requisito']]['color'] = 'green'
 
     # Inicializar la visualización del grafo
-    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white", directed=True, layout=True)
+    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white", directed=True)
+    net.barnes_hut()  # Usar el algoritmo de optimización Barnes-Hut para una mejor distribución espacial
 
-    # Añadir nodos con niveles al grafo de pyvis
+    # Configurar la disposición del grafo por niveles
     for node, attrs in G.nodes(data=True):
         net.add_node(node, label=attrs['label'], color=attrs['color'], level=attrs['level'])
-
-    # Añadir aristas
     for edge in G.edges:
         net.add_edge(edge[0], edge[1])
 
-    # Configurar la disposición del grafo por niveles
+    # Opciones para la visualización jerárquica
     net.set_options("""
-    var options = {
+    {
       "layout": {
         "hierarchical": {
           "enabled": true,
-          "levelSeparation": 150,
-          "nodeSpacing": 100,
-          "treeSpacing": 200,
-          "blockShifting": true,
-          "edgeMinimization": true,
-          "parentCentralization": true,
-          "direction": "UD",  // UD = Up-Down
-          "sortMethod": "directed"  // Hubo otras opciones como hubsize
+          "direction": "UD",  // De arriba hacia abajo
+          "sortMethod": "directed"  // Asegurar que la dirección de las aristas influye en la disposición
         }
       }
     }
     """)
 
-    # Guardar el grafo en HTML y mostrarlo en Streamlit
-    net.save_graph("graph.html")
-    HtmlFile = open("graph.html", 'r', encoding='utf-8')
-    source_code = HtmlFile.read()
-    st.components.v1.html(source_code, height=800)
+    # Guardar y mostrar el grafo
+    net.show("graph.html")
+    st.components.v1.iframe("graph.html", width=800, height=600)
 
 def main():
     st.title("Sistema de Visualización de Cursos")
