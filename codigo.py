@@ -49,6 +49,15 @@ def draw_graph(df, user_info):
                     G.nodes[row['Código']]['color'] = 'blue'  # Curso accesible
             G.add_node(row['Codigo_del_Requisito'], title=row['Codigo_del_Requisito'], color='green' if row['Codigo_del_Requisito'] in cursos_aprobados else 'gray')
 
+    # Filtrar la tabla de datos para mostrar solo los nodos presentes en el grafo
+    nodos_mostrados = G.nodes()
+    df_mostrados = df[df['Código'].isin(nodos_mostrados)].copy()
+    df_mostrados = df_mostrados[['Ciclo', 'Código', 'Cursos']].drop_duplicates().sort_values(by='Ciclo')
+    
+    # Mostrar la tabla en Streamlit antes del grafo
+    st.write("Cursos Mostrados en el Grafo")
+    st.dataframe(df_mostrados)
+
     # Inicializar la visualización del grafo
     net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
 
@@ -64,14 +73,6 @@ def draw_graph(df, user_info):
     source_code = HtmlFile.read()
     st.components.v1.html(source_code, height=800)
 
-    # Filtrar la tabla de datos para mostrar solo los nodos presentes en el grafo
-    nodos_mostrados = G.nodes()
-    df_mostrados = df[df['Código'].isin(nodos_mostrados)].copy()
-    df_mostrados = df_mostrados[['Ciclo', 'Código', 'Cursos']].drop_duplicates().sort_values(by='Ciclo')
-    
-    # Mostrar la tabla en Streamlit
-    st.write("Cursos Mostrados en el Grafo")
-    st.dataframe(df_mostrados)
 def main():
     st.title("Sistema de Visualización de Cursos")
 
