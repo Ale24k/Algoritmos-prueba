@@ -22,7 +22,7 @@ import streamlit as st
 import networkx as nx
 
 def draw_graph(df, user_info):
-    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar."""
+    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar, limitado a un curso siguiente."""
     ciclo_actual = int(user_info['ciclo_actual'])
     cursos_aprobados = set(user_info['cursos_aprobados'])
 
@@ -40,10 +40,10 @@ def draw_graph(df, user_info):
     # Inicializar la visualización del grafo
     net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
 
-    # Determinar cursos accesibles basados en requisitos cumplidos
-    cursos_accesibles = set(cursos_aprobados)  # Inicialmente incluir todos los cursos aprobados
+    # Determinar cursos directamente accesibles basados en cursos aprobados
+    cursos_accesibles = set()
     for _, row in df_filtrado.iterrows():
-        if row['Codigo_del_Requisito'] in cursos_accesibles or pd.isna(row['Codigo_del_Requisito']):
+        if row['Codigo_del_Requisito'] in cursos_aprobados and not pd.isna(row['Codigo_del_Requisito']):
             cursos_accesibles.add(row['Código'])
 
     # Añadir nodos al grafo con colores correspondientes
@@ -51,9 +51,10 @@ def draw_graph(df, user_info):
         color = 'green' if node in cursos_aprobados else 'blue' if node in cursos_accesibles else 'gray'
         net.add_node(node, title=node, color=color)
 
-    # Añadir aristas al grafo
+    # Añadir aristas al grafo para solo cursos accesibles
     for edge in G.edges:
-        net.add_edge(edge[0], edge[1])
+        if edge[1] in cursos_accesibles:
+            net.add_edge(edge[0], edge[1])
 
     # Guardar el grafo en HTML y mostrarlo en Streamlit
     net.save_graph("graph.html")
