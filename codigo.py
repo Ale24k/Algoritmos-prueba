@@ -63,6 +63,15 @@ def draw_graph(df, user_info):
     HtmlFile = open("graph.html", 'r', encoding='utf-8')
     source_code = HtmlFile.read()
     st.components.v1.html(source_code, height=800)
+
+    # Filtrar la tabla de datos para mostrar solo los nodos presentes en el grafo
+    nodos_mostrados = G.nodes()
+    df_mostrados = df[df['Código'].isin(nodos_mostrados)].copy()
+    df_mostrados = df_mostrados[['Ciclo', 'Código', 'Cursos']].drop_duplicates().sort_values(by='Ciclo')
+    
+    # Mostrar la tabla en Streamlit
+    st.write("Cursos Mostrados en el Grafo")
+    st.dataframe(df_mostrados)
 def main():
     st.title("Sistema de Visualización de Cursos")
 
