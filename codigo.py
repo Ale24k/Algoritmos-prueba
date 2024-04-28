@@ -48,43 +48,44 @@ def draw_graph(df, user_info):
 
     # Añadir nodos con colores correspondientes
     for node in G.nodes:
+        # No añadimos el nombre del curso al título para que no aparezca en el hover
         color = 'green' if node in cursos_aprobados else 'blue' if node in cursos_accesibles else 'gray'
-        # Solo el código del curso será visible como etiqueta
-        net.add_node(node, label=node, color=color, title='')
+        net.add_node(node, label=node, color=color)
 
-    # Añadir aristas
-    for edge in G.edges:
-        net.add_edge(edge[0], edge[1])
+    # ...[codigo existente para añadir aristas]...
 
     # Guardar y mostrar el grafo
     net.show_buttons(filter_=['physics'])
     net.save_graph("graph.html")
 
-    # Leemos el archivo HTML y lo mostramos en Streamlit
+    # Inyectar el script para manejar el evento de clic directamente en el componente de HTML
     HtmlFile = open("graph.html", 'r', encoding='utf-8')
     source_code = HtmlFile.read()
-    
-    # Insertar un script para manejar el evento de clic en el frontend si es necesario
-    # Este ejemplo de script solo ilustra donde y cómo agregar el manejo de JavaScript
-    # Deberá ser ajustado para integrarse con las capacidades de Streamlit
-    click_handler_script = """
+
+    # Añadir un script que se ejecutará cuando se haga clic en un nodo
+    source_code += """
     <script type="text/javascript">
         document.addEventListener('DOMContentLoaded', function() {
-            var network = new vis.Network(container, data, options);
+            var container = document.getElementById('mynetwork');
+            var data = {
+                nodes: new vis.DataSet([
+                    // ... Definición de los nodos ...
+                ]),
+                edges: new vis.DataSet([
+                    // ... Definición de las aristas ...
+                ])
+            };
+            var network = new vis.Network(container, data, {});
             network.on("click", function (params) {
                 if (params.nodes.length > 0) {
                     var nodeId = params.nodes[0];
-                    // Aquí se debería implementar la lógica para mostrar el nombre del curso
-                    // Por ejemplo, actualizando un elemento HTML con el nombre del curso
+                    var node = data.nodes.get(nodeId);
+                    alert('Curso: ' + node.title); // Aquí mostraríamos el nombre del curso
                 }
             });
         });
     </script>
     """
-    # Agregar el script de manejo de clic justo antes del tag de cierre </body>
-    source_code = source_code.replace('</body>', f'{click_handler_script}</body>')
-    
-    # Usar el componente html de Streamlit para renderizar el HTML personalizado
     st.components.v1.html(source_code, height=800)
 
 
