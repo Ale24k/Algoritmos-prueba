@@ -50,8 +50,8 @@ def draw_graph(df, user_info):
     for node in G.nodes:
         nombre_curso = df_filtrado[df_filtrado['Código'] == node]['Cursos'].values[0] if node in df_filtrado['Código'].values else 'Curso no encontrado'
         color = 'green' if node in cursos_aprobados else 'blue' if node in cursos_accesibles else 'gray'
-        titulo = f"{node}: {nombre_curso}"
-        net.add_node(node, title=titulo, color=color)
+        titulo = f"{nombre_curso}"
+        net.add_node(node, title=titulo, label=node, color=color)
 
     # Añadir aristas
     for edge in G.edges:
