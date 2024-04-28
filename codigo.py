@@ -47,7 +47,7 @@ def draw_graph(df, user_info):
 
     nodos_mostrados = G.nodes()
     df_mostrados = df[df['Código'].isin(nodos_mostrados)].copy()
-    df_mostrados = df_mostrados[['Ciclo', 'Código', 'Cursos']].drop_duplicates().sort_values(by='Ciclo')
+    df_mostrados = df_mostrados[['Ciclo', 'Código', 'Nombre']].drop_duplicates().sort_values(by='Ciclo')
     
     st.write("Cursos Mostrados en el Grafo")
     st.dataframe(df_mostrados)
