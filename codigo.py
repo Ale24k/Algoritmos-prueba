@@ -15,11 +15,6 @@ def verify_login(username, password):
         return user_info
     return None
 
-from pyvis.network import Network
-import pandas as pd
-import streamlit as st
-import networkx as nx
-
 def draw_graph(df, user_info):
     """Draws the graph with the approved courses and courses the user can take, showing direct prerequisite connections."""
     ciclo_actual = int(user_info['ciclo_actual'])
@@ -29,44 +24,31 @@ def draw_graph(df, user_info):
     df['Código'] = df['Código'].astype(str).str.strip()
     df['Requisito'] = df['Requisito'].astype(str).str.strip()  # Updated column name
 
-    # Filter courses within 3 cycles ahead of the current one
     df_filtrado = df[df['Ciclo'] <= ciclo_actual + 3]
-
-    # Create the directed graph
     G = nx.DiGraph()
     for index, row in df_filtrado.iterrows():
-        # Add node for the current course if not already present
         if row['Código'] not in G.nodes():
             G.add_node(row['Código'], title=row['Código'], color='green' if row['Código'] in cursos_aprobados else 'gray')
-
-        # Add edges for prerequisite if it's not 'Ninguno'
         if row['Requisito'] != 'Ninguno':
-            # Add node for the prerequisite if not already present
             if row['Requisito'] not in G.nodes():
                 G.add_node(row['Requisito'], title=row['Requisito'], color='green' if row['Requisito'] in cursos_aprobados else 'gray')
-            # Add edge from prerequisite to the current course
             G.add_edge(row['Requisito'], row['Código'])
-            # Update color for the current course if it can be taken next and it's not already approved
             if row['Requisito'] in cursos_aprobados and row['Código'] not in cursos_aprobados:
                 G.nodes[row['Código']]['color'] = 'blue'
 
-    # Get nodes displayed in the graph
     nodos_mostrados = G.nodes()
     df_mostrados = df[df['Código'].isin(nodos_mostrados)].copy()
-    # This needs to be updated to the correct column names if they differ from the original
     df_mostrados = df_mostrados[['Ciclo', 'Código', 'Nombre']].drop_duplicates().sort_values(by='Ciclo')
     
     st.write("Courses Displayed in the Graph")
     st.dataframe(df_mostrados)
 
     net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
-    # Add nodes and edges to the network graph
     for node, node_attrs in G.nodes(data=True):
         net.add_node(node, title=node, color=node_attrs['color'])
     for edge in G.edges():
         net.add_edge(edge[0], edge[1])
 
-    # Save and display the graph
     net.save_graph("graph.html")
     HtmlFile = open("graph.html", 'r', encoding='utf-8')
     source_code = HtmlFile.read()
