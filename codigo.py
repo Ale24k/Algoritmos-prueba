@@ -34,30 +34,26 @@ def draw_graph(df, user_info):
     # Crear el grafo dirigido
     G = nx.DiGraph()
 
-    # Agregar nodos con información de ciclo y color inicial
-    for code in df['Código'].unique():
-        ciclo = df.loc[df['Código'] == code, 'Ciclo'].max()  # Usar el ciclo más alto si hay discrepancias
-        G.add_node(code, label=code, level=ciclo, color='gray')
-
-    # Agregar aristas y actualizar colores de nodos
-    for _, row in df.iterrows():
+    # Preparar nodos con información completa para evitar errores
+    for index, row in df.iterrows():
+        G.add_node(row['Código'], label=row['Código'], level=int(row['Ciclo']),
+                   color='blue' if row['Código'] in cursos_aprobados and pd.notna(row['Codigo_del_Requisito']) else 'gray')
         if pd.notna(row['Codigo_del_Requisito']):
             G.add_edge(row['Codigo_del_Requisito'], row['Código'])
             if row['Codigo_del_Requisito'] in cursos_aprobados:
-                G.nodes[row['Código']]['color'] = 'blue' if row['Código'] not in cursos_aprobados else 'green'
-                G.nodes[row['Codigo_del_Requisito']]['color'] = 'green'
+                G.nodes[row['Código']]['color'] = 'green'
 
     # Inicializar la visualización del grafo
     net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white", directed=True)
     net.barnes_hut()  # Usar el algoritmo de optimización Barnes-Hut para una mejor distribución espacial
 
-    # Configurar la disposición del grafo por niveles
+    # Añadir nodos y aristas a PyVis net
     for node, attrs in G.nodes(data=True):
-        net.add_node(node, label=attrs['label'], color=attrs['color'], level=attrs['level'])
+        net.add_node(node, label=attrs.get('label', node), color=attrs.get('color', 'gray'), level=attrs.get('level', 0))
     for edge in G.edges:
         net.add_edge(edge[0], edge[1])
 
-    # Opciones para la visualización jerárquica
+    # Configurar la disposición del grafo por niveles
     net.set_options("""
     {
       "layout": {
@@ -73,7 +69,6 @@ def draw_graph(df, user_info):
     # Guardar y mostrar el grafo
     net.show("graph.html")
     st.components.v1.iframe("graph.html", width=800, height=600)
-
 def main():
     st.title("Sistema de Visualización de Cursos")
 
