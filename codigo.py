@@ -27,7 +27,7 @@ def draw_graph(df, user_info):
 
     df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
     df['Código'] = df['Código'].astype(str).str.strip()
-    df['Codigo_del_Requisito'] = df['Codigo_del_Requisito'].astype(str).str.strip()
+    df['Nombre Requisito'] = df['Nombre Requisito'].astype(str).str.strip()
 
     # Filtrar cursos que están dentro de 3 ciclos adelante del actual
     df_filtrado = df[df['Ciclo'] <= ciclo_actual + 3]
