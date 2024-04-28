@@ -31,32 +31,34 @@ def draw_graph(df, user_info):
     df['Código'] = df['Código'].astype(str).str.strip()
     df['Codigo_del_Requisito'] = df['Codigo_del_Requisito'].astype(str).str.strip()
 
-    # Filtrar cursos que están dentro de 3 ciclos adelante
+    # Filtrar cursos que están dentro de 3 ciclos adelante del actual
     df_filtrado = df[df['Ciclo'] <= ciclo_actual + 3]
 
-    # Crear el grafo
+    # Crear el grafo dirigido
     G = nx.from_pandas_edgelist(df_filtrado, 'Código', 'Codigo_del_Requisito', create_using=nx.DiGraph())
+
+    # Inicializar la visualización del grafo
     net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
 
     # Determinar cursos accesibles basados en requisitos cumplidos
-    cursos_accesibles = cursos_aprobados.copy()
+    cursos_accesibles = set(cursos_aprobados)  # Inicialmente incluir todos los cursos aprobados
     for _, row in df_filtrado.iterrows():
-        if row['Codigo_del_Requisito'] in cursos_accesibles or row['Codigo_del_Requisito'] == 'nan':
+        if row['Codigo_del_Requisito'] in cursos_accesibles or pd.isna(row['Codigo_del_Requisito']):
             cursos_accesibles.add(row['Código'])
 
-    # Añadir nodos con colores correspondientes
+    # Añadir nodos al grafo con colores correspondientes
     for node in G.nodes:
         color = 'green' if node in cursos_aprobados else 'blue' if node in cursos_accesibles else 'gray'
         net.add_node(node, title=node, color=color)
 
-    # Añadir aristas
+    # Añadir aristas al grafo
     for edge in G.edges:
         net.add_edge(edge[0], edge[1])
 
     # Guardar el grafo en HTML y mostrarlo en Streamlit
     net.save_graph("graph.html")
     HtmlFile = open("graph.html", 'r', encoding='utf-8')
-    source_code = HtmlFile.read() 
+    source_code = HtmlFile.read()
     st.components.v1.html(source_code, height=800)
 
 def main():
