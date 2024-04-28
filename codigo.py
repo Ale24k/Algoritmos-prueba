@@ -27,7 +27,7 @@ def draw_graph(df, user_info):
 
     df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
     df['Código'] = df['Código'].astype(str).str.strip()
-    df['Nombre Requisito'] = df['Nombre Requisito'].astype(str).str.strip()
+    df['Codigo_del_Requisito'] = df['Codigo_del_Requisito'].astype(str).str.strip()
 
     # Filtrar cursos que están dentro de 3 ciclos adelante del actual
     df_filtrado = df[df['Ciclo'] <= ciclo_actual + 3]
@@ -38,16 +38,16 @@ def draw_graph(df, user_info):
         if row['Código'] not in G.nodes():
             G.add_node(row['Código'], title=row['Código'], color='gray') 
 
-        if pd.notna(row['Nombre Requisito']):
-            if row['Nombre Requisito'] in cursos_aprobados:
+        if pd.notna(row['Codigo_del_Requisito']):
+            if row['Codigo_del_Requisito'] in cursos_aprobados:
                 if row['Código'] not in cursos_aprobados:
-                    G.add_edge(row['Nombre Requisito'], row['Código'])
+                    G.add_edge(row['Codigo_del_Requisito'], row['Código'])
                     G.nodes[row['Código']]['color'] = 'blue'  # Curso accesible
-            G.add_node(row['Nombre Requisito'], title=row['Nombre Requisito'], color='green' if row['Nombre Requisito'] in cursos_aprobados else 'gray')
+            G.add_node(row['Codigo_del_Requisito'], title=row['Codigo_del_Requisito'], color='green' if row['Codigo_del_Requisito'] in cursos_aprobados else 'gray')
 
     nodos_mostrados = G.nodes()
     df_mostrados = df[df['Código'].isin(nodos_mostrados)].copy()
-    df_mostrados = df_mostrados[['Ciclo', 'Código', 'Nombre']].drop_duplicates().sort_values(by='Ciclo')
+    df_mostrados = df_mostrados[['Ciclo', 'Código', 'Cursos']].drop_duplicates().sort_values(by='Ciclo')
     
     st.write("Cursos Mostrados en el Grafo")
     st.dataframe(df_mostrados)
