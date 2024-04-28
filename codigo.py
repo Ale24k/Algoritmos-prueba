@@ -22,53 +22,47 @@ import streamlit as st
 import networkx as nx
 
 def draw_graph(df, user_info):
-    """Dibuja el grafo organizado por ciclos, con los cursos aprobados y los cursos que el usuario puede tomar."""
+    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar, mostrando conexiones directas de requisitos."""
     ciclo_actual = int(user_info['ciclo_actual'])
     cursos_aprobados = set(user_info['cursos_aprobados'])
 
     # Convertir ciclos a enteros y limpiar códigos de curso para consistencia
-    df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce').fillna(0).astype(int)
+    df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
     df['Código'] = df['Código'].astype(str).str.strip()
     df['Codigo_del_Requisito'] = df['Codigo_del_Requisito'].astype(str).str.strip()
+
+    # Filtrar cursos que están dentro de 3 ciclos adelante del actual
+    df_filtrado = df[df['Ciclo'] <= ciclo_actual + 3]
 
     # Crear el grafo dirigido
     G = nx.DiGraph()
 
-    for index, row in df.iterrows():
-        G.add_node(row['Código'], label=row['Código'], level=int(row['Ciclo']),
-                   color='blue' if row['Código'] in cursos_aprobados and pd.notna(row['Codigo_del_Requisito']) else 'gray')
+    # Determinar cursos directamente accesibles basados en cursos aprobados y agregar nodos y aristas pertinentes
+    for index, row in df_filtrado.iterrows():
+        if row['Código'] not in G.nodes():
+            G.add_node(row['Código'], title=row['Código'], color='gray')  # Agregar nodo con color inicial gris
+
         if pd.notna(row['Codigo_del_Requisito']):
-            G.add_edge(row['Codigo_del_Requisito'], row['Código'])
             if row['Codigo_del_Requisito'] in cursos_aprobados:
-                G.nodes[row['Código']]['color'] = 'green'
+                if row['Código'] not in cursos_aprobados:
+                    G.add_edge(row['Codigo_del_Requisito'], row['Código'])
+                    G.nodes[row['Código']]['color'] = 'blue'  # Curso accesible
+            G.add_node(row['Codigo_del_Requisito'], title=row['Codigo_del_Requisito'], color='green' if row['Codigo_del_Requisito'] in cursos_aprobados else 'gray')
 
     # Inicializar la visualización del grafo
-    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white", directed=True)
-    net.barnes_hut()  # Usar el algoritmo de optimización Barnes-Hut para una mejor distribución espacial
+    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
 
-    # Añadir nodos y aristas a PyVis net
-    for node, attrs in G.nodes(data=True):
-        net.add_node(node, label=attrs.get('label', node), color=attrs.get('color', 'gray'), level=attrs.get('level', 0))
+    # Añadir nodos y aristas al grafo visual
+    for node, node_attrs in G.nodes(data=True):
+        net.add_node(node, title=node, color=node_attrs['color'])
     for edge in G.edges:
         net.add_edge(edge[0], edge[1])
 
-    # Configurar las opciones de disposición del grafo
-    options = """
-    {
-      "layout": {
-        "hierarchical": {
-          "enabled": true,
-          "direction": "UD",
-          "sortMethod": "directed"
-        }
-      }
-    }
-    """
-    net.set_options(options)
-
-    # Guardar y mostrar el grafo
-    net.show("graph.html")
-    st.components.v1.iframe("graph.html", width=800, height=600)
+    # Guardar el grafo en HTML y mostrarlo en Streamlit
+    net.save_graph("graph.html")
+    HtmlFile = open("graph.html", 'r', encoding='utf-8')
+    source_code = HtmlFile.read()
+    st.components.v1.html(source_code, height=800)
 def main():
     st.title("Sistema de Visualización de Cursos")
 
