@@ -34,7 +34,6 @@ def draw_graph(df, user_info):
     # Crear el grafo dirigido
     G = nx.DiGraph()
 
-    # Preparar nodos con información completa para evitar errores
     for index, row in df.iterrows():
         G.add_node(row['Código'], label=row['Código'], level=int(row['Ciclo']),
                    color='blue' if row['Código'] in cursos_aprobados and pd.notna(row['Codigo_del_Requisito']) else 'gray')
@@ -53,18 +52,19 @@ def draw_graph(df, user_info):
     for edge in G.edges:
         net.add_edge(edge[0], edge[1])
 
-    # Configurar la disposición del grafo por niveles
-    net.set_options("""
+    # Configurar las opciones de disposición del grafo
+    options = """
     {
       "layout": {
         "hierarchical": {
           "enabled": true,
-          "direction": "UD",  // De arriba hacia abajo
-          "sortMethod": "directed"  // Asegurar que la dirección de las aristas influye en la disposición
+          "direction": "UD",
+          "sortMethod": "directed"
         }
       }
     }
-    """)
+    """
+    net.set_options(options)
 
     # Guardar y mostrar el grafo
     net.show("graph.html")
