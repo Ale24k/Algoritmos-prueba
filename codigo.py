@@ -22,7 +22,7 @@ import streamlit as st
 import networkx as nx
 
 def draw_graph(df, user_info):
-    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar, mostrando nombres en los nodos."""
+    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar."""
     
     ciclo_actual = int(user_info['ciclo_actual'])
     cursos_aprobados = set(user_info['cursos_aprobados'])
@@ -30,7 +30,7 @@ def draw_graph(df, user_info):
     # Asegurarse de que los datos son del tipo correcto
     df['Ciclo'] = pd.to_numeric(df['Ciclo'], errors='coerce')
     df['Código'] = df['Código'].astype(str).str.strip()
-    df['Cursos'] = df['Cursos'].astype(str).str.strip()  # Ajustando aquí al nombre correcto de la columna
+    df['Cursos'] = df['Cursos'].astype(str).str.strip()
     df['Requisito'] = df['Requisito'].astype(str).str.strip()
 
     # Filtrar cursos que están dentro de 3 ciclos adelante
@@ -46,12 +46,11 @@ def draw_graph(df, user_info):
         if row['Requisito'] in cursos_accesibles or row['Requisito'] == 'nan':
             cursos_accesibles.add(row['Código'])
 
-    # Añadir nodos con colores correspondientes y título con el nombre del curso
+    # Añadir nodos con colores correspondientes
     for node in G.nodes:
-        nombre_curso = df_filtrado[df_filtrado['Código'] == node]['Cursos'].values[0] if node in df_filtrado['Código'].values else 'Curso no encontrado'
         color = 'green' if node in cursos_aprobados else 'blue' if node in cursos_accesibles else 'gray'
-        titulo = f"{nombre_curso}"
-        net.add_node(node, title=titulo, label=node, color=color)
+        # Solo el código del curso será visible como etiqueta
+        net.add_node(node, label=node, color=color, title='')
 
     # Añadir aristas
     for edge in G.edges:
@@ -60,9 +59,32 @@ def draw_graph(df, user_info):
     # Guardar y mostrar el grafo
     net.show_buttons(filter_=['physics'])
     net.save_graph("graph.html")
-    net.show_buttons(filter_=['interaction'])  # Add this to enable the interaction options in GUI
+
+    # Leemos el archivo HTML y lo mostramos en Streamlit
     HtmlFile = open("graph.html", 'r', encoding='utf-8')
     source_code = HtmlFile.read()
+    
+    # Insertar un script para manejar el evento de clic en el frontend si es necesario
+    # Este ejemplo de script solo ilustra donde y cómo agregar el manejo de JavaScript
+    # Deberá ser ajustado para integrarse con las capacidades de Streamlit
+    click_handler_script = """
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            var network = new vis.Network(container, data, options);
+            network.on("click", function (params) {
+                if (params.nodes.length > 0) {
+                    var nodeId = params.nodes[0];
+                    // Aquí se debería implementar la lógica para mostrar el nombre del curso
+                    // Por ejemplo, actualizando un elemento HTML con el nombre del curso
+                }
+            });
+        });
+    </script>
+    """
+    # Agregar el script de manejo de clic justo antes del tag de cierre </body>
+    source_code = source_code.replace('</body>', f'{click_handler_script}</body>')
+    
+    # Usar el componente html de Streamlit para renderizar el HTML personalizado
     st.components.v1.html(source_code, height=800)
 
 
