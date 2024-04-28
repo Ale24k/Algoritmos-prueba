@@ -22,7 +22,7 @@ import streamlit as st
 import networkx as nx
 
 def draw_graph(df, user_info):
-    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar, limitado a un curso siguiente."""
+    """Dibuja el grafo con los cursos aprobados y los cursos que el usuario puede tomar, mostrando solo conexiones directas de requisitos."""
     ciclo_actual = int(user_info['ciclo_actual'])
     cursos_aprobados = set(user_info['cursos_aprobados'])
 
@@ -40,7 +40,7 @@ def draw_graph(df, user_info):
     # Inicializar la visualización del grafo
     net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
 
-    # Determinar cursos directamente accesibles basados en cursos aprobados
+    # Determinar cursos accesibles directamente basados en los cursos aprobados
     cursos_accesibles = set()
     for _, row in df_filtrado.iterrows():
         if row['Codigo_del_Requisito'] in cursos_aprobados and not pd.isna(row['Codigo_del_Requisito']):
@@ -51,9 +51,9 @@ def draw_graph(df, user_info):
         color = 'green' if node in cursos_aprobados else 'blue' if node in cursos_accesibles else 'gray'
         net.add_node(node, title=node, color=color)
 
-    # Añadir aristas al grafo para solo cursos accesibles
+    # Añadir aristas solo entre cursos aprobados y sus cursos accesibles directamente
     for edge in G.edges:
-        if edge[1] in cursos_accesibles:
+        if edge[0] in cursos_aprobados and edge[1] in cursos_accesibles:
             net.add_edge(edge[0], edge[1])
 
     # Guardar el grafo en HTML y mostrarlo en Streamlit
